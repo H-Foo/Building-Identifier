@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'package:permission_handler/permission_handler.dart';
 
 class settings extends StatefulWidget {
   const settings({Key? key}):
@@ -14,6 +13,8 @@ class settings extends StatefulWidget {
 
 class _settingsState extends State<settings>{
   bool checked = false;
+  bool checked2 = false;
+  bool checked3 = false;
   @override
   Widget build(BuildContext context){
     return Scaffold(
@@ -21,11 +22,11 @@ class _settingsState extends State<settings>{
         fit: StackFit.expand,
         alignment: const Alignment(0, 0),
         children: [
-          Positioned(top: 40, left: 45.5, width: 331, height: 38,
+          Positioned(top: 40, left: 33.5, width: 331, height: 38,
           child: Container(decoration:
             BoxDecoration(color: const Color(3343934669,),
             borderRadius: BorderRadius.circular(20,)),),),
-          Positioned(top: 49, left: 117,
+          Positioned(top: 52, left: 110,
             child: Text('SETTINGS',
           style: TextStyle(
             fontSize: 16,
@@ -41,14 +42,9 @@ class _settingsState extends State<settings>{
           Positioned(top: 130, left: 325.5,
               child: Checkbox(
             value: checked,
-            onChanged: (bool? value){
-              setState(() {
-                () async {
-                  PermissionStatus storageStatus = await Permission.manageExternalStorage.request();
-                  if (storageStatus == PermissionStatus.denied){
-                    print("storage permission denied");
-                  }
-                };
+            onChanged: (newValue){
+              setState((){
+                checked = newValue!;
               });
             },
             activeColor: const Color(4283193533,),
@@ -56,49 +52,40 @@ class _settingsState extends State<settings>{
             checkColor: Colors.black,
             side: const BorderSide(color: Colors.white, width: 1),
           )),
-      Positioned(top: 181, left: 40, width: 163, height: 22,
-        child: Text('Allow Location Access',
-          style: TextStyle(
-            color: Colors.white,),
-          textAlign: TextAlign.start,),),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              const Text("Allow Camera Access",
-                style: TextStyle(
-                  color: Colors.white,),
-                textAlign: TextAlign.start,),
-              Checkbox(
-                value:false,
+           Positioned(top: 181, left: 40, width: 163, height: 22,
+             child: Text('Allow Location Access',
+                    style: TextStyle(
+                    color: Colors.white,),
+                    textAlign: TextAlign.start,),),
+          Positioned(top: 167, left: 325.5,
+              child: Checkbox(
+                value: checked2,
                 onChanged: (newValue){
                   setState((){
-                    checked = newValue!;
+                    checked2 = newValue!;
                   });},
                 activeColor: const Color(4283193533,),
                 splashRadius: 2,
                 checkColor: Colors.black,
                 side: const BorderSide(color: Colors.white, width: 1),
-              )],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              const Text("Allow Camera Access",
+              )),
+          Positioned(top: 219, left: 40, width: 163, height: 22,
+            child: Text('Allow Camera Access',
               style: TextStyle(
                 color: Colors.white,),
-              textAlign: TextAlign.start,),
-            Checkbox(
-                value:false,
+              textAlign: TextAlign.start,),),
+          Positioned(top: 205, left: 325.5,
+              child: Checkbox(
+                value: checked3,
                 onChanged: (newValue){
-              setState((){
-                checked = newValue!;
-              });},
+                  setState((){
+                    checked3 = newValue!;
+                  });},
                 activeColor: const Color(4283193533,),
                 splashRadius: 2,
                 checkColor: Colors.black,
                 side: const BorderSide(color: Colors.white, width: 1),
-            )],
-          ),
+              )),
       Positioned( top: 99, left: 40,
       child: Text('Application Permissions',
       style: TextStyle(color: const Color(4289967027,),
@@ -106,7 +93,7 @@ class _settingsState extends State<settings>{
       ), width: 146, height: 23,
       ),
 
-    Positioned(top: 47, left:55, child: GestureDetector(
+    Positioned(top: 47, left:50, child: GestureDetector(
     child: Icon(
       const IconData(
         58199, fontFamily:'MaterialIcons', matchTextDirection: true,),

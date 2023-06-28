@@ -1,10 +1,5 @@
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:camera_features/camera_features.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 
@@ -14,24 +9,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class MyHomePageState extends State<MyHomePage> {
-  File? imageFile;
-  Position _currentPosition = Position(longitude: 0.00, latitude: 0.00, timestamp: DateTime.now(), accuracy: 1.0, altitude: 0.0, heading: 0.0, speed: 0.0, speedAccuracy: 0.0);
-  String _cameraInfo = 'Unknown';
-
-  Future<void> getCameraInfo() async{
-    String cameraInfo;
-    try{
-      var test = <String>[];
-      test.add("LENS_INFO_AVAILABLE_FOCAL_LENGTHS");
-      cameraInfo = await CameraFeatures.getCameraFeatures(test);
-    } on PlatformException{
-      cameraInfo = "Failed to get information.";
-    }
-    setState(() {
-      _cameraInfo = cameraInfo;
-    });
-}
-
   Future<void> showAlert() async {
     showDialog(context: context,
         builder: (BuildContext context){
@@ -48,44 +25,14 @@ class MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void getFromCamera() async {
-    XFile? pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      maxHeight: 1080,
-      maxWidth: 1080,
-    );
-
-    setState(() {
-      imageFile = File(pickedFile!.path);
-      super.initState();
-    });
-  }
-
-  _getCurrentLocation() {
-    Geolocator
-        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best, forceAndroidLocationManager: true)
-        .then((Position position) {
-      setState(() {
-        _currentPosition = position;
-      });
-    }).catchError((e) {
-      print(e);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-            body: ListView(
+            body: Stack(
+              fit: StackFit.expand,
+              alignment: const Alignment(0, 0),
               children: [
-                SizedBox(
-                  height: 50,
-                ),
-                imageFile != null
-                    ? Container(
-                        child: Image.file(imageFile!),
-                      )
-                    : Container(
+                Container(
                         height: 200,
                         width: double.infinity,
                         decoration: const BoxDecoration(
@@ -93,60 +40,77 @@ class MyHomePageState extends State<MyHomePage> {
                               image: AssetImage("assets/city.png"),
                               fit: BoxFit.cover),
                         )),
-                Container(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      if(_currentPosition != null) Text(
-                        "LAT: ${_currentPosition.latitude}, LNG:${_currentPosition.longitude}"
-                      ),
-                      ElevatedButton(onPressed: (){_getCurrentLocation();},
-                          child: Text("Get Location"))
-                    ],
-                  )
-                ),
-                Container(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text("FC: $_cameraInfo")
-                      ],
-                    )
-                ),
-                 Padding(
-                    padding: const EdgeInsets.all(30.0),
-                    child: ElevatedButton(
-                      child: Text('Start Identifying'),
+
+                Positioned(top:55, left: 25, width: 360, height: 40,
+                    child: Container(
+                      decoration: BoxDecoration(color: const Color(3345377237),
+                        borderRadius: BorderRadius.all(Radius.circular(20)),),
+                    )),
+                Positioned( height: 97, width: 294.5, left: 57.5, top: 264,
+                    child: Text('BUILDING IDENTIFIER',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                  shadows: [const Shadow(offset: Offset(5, 3,),
+                  color: Color(2868956927,),
+                  blurRadius: 3)],
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 30,
+                ),)),
+                // Positioned(top: 606, width: 113, height: 115,
+                //     child: Container(
+                //       decoration: BoxDecoration(
+                //         color: const Color(3345377237),
+                //         shape: BoxShape.circle,
+                //         image: DecorationImage(
+                //           image: AssetImage("assets/detect.png"),
+                //           fit: BoxFit.scaleDown,
+                //         ))
+                //       ),
+                //     ),
+                Positioned( width: 176, height: 49, top: 625,
+                   child: ElevatedButton(
+                      child: Text('START IDENTIFYING'),
                       onPressed: () async {
                           PermissionStatus cameraStatus = await Permission.camera.request();
+                          PermissionStatus locationStatus = await Permission.location.request();
                           if (cameraStatus == PermissionStatus.denied){
                             showAlert();
                             print("camera permission denied");
                           }
-                          if (cameraStatus == PermissionStatus.granted){
-                            getFromCamera();
+                          if(locationStatus == PermissionStatus.denied){
+                            showAlert();
+                            print("location permission denied");
+                          }
+                          if (cameraStatus == PermissionStatus.granted && locationStatus == PermissionStatus.granted){
+                            Navigator.of(context).pushReplacementNamed('firstapp/camera_screen');
                           }
                         },
                       style: ButtonStyle(
+                          shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(25))),
                           backgroundColor:
-                          MaterialStateProperty.all(Colors.indigoAccent),
-                          padding: MaterialStateProperty.all(EdgeInsets.all(12)),
+                          MaterialStateProperty.all(const Color(3345377237)),
+                          padding: MaterialStateProperty.all(EdgeInsets.all(10)),
                           textStyle:
-                          MaterialStateProperty.all(TextStyle(fontSize: 16))),
-                    ),
+                          MaterialStateProperty.all(TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
                   ),
-                Positioned(top: 29, left: 316, width: 27, height: 27,
+                ),
+                Positioned( top: 420, width: 90, height: 83,
+                    child: Image(
+                  image: const AssetImage("assets/detect.png"), fit: BoxFit.cover
+                )),
+                Positioned(top: 61, left: 347, width: 27, height: 27,
                   child: GestureDetector(
-                        child: Icon(
-                          const IconData(
-                            0xe57f, fontFamily:'MaterialIcons', matchTextDirection: true,),
-                        color: Colors.lightBlueAccent,),
-                        onTap: (){
-                          Navigator.of(context).pushReplacementNamed('firstapp/settings');
-                        },
-                      ),
-                   ),
+                    child: Icon(
+                      const IconData(
+                        0xe57f, fontFamily:'MaterialIcons', matchTextDirection: true,),
+                      color: Colors.lightBlueAccent,),
+                    onTap: (){
+                      Navigator.of(context).pushReplacementNamed('firstapp/settings');
+                    },
+                  ),
+                ),
     ],),
-    backgroundColor: Colors.black);
+   );
   }
 }
