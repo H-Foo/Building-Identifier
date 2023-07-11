@@ -1,12 +1,38 @@
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import '../main.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+
+var db = FirebaseFirestore.instance;
+String? error;
+List<double>? _gyroscopeData;
+Position _currentPosition = Position(longitude: 0.00, latitude: 0.00, timestamp: DateTime.now(), accuracy: 1.0, altitude: 0.0, heading: 0.0, speed: 0.0, speedAccuracy: 0.0);
+Offset? _tapCoordinates;
+
+//read from firestore
+Future readDatabase() async{
+  await db.collection("building").get().then((event){
+    for (var doc in event.docs){
+      print("${doc.id} => ${doc.data()}");
+    }
+  });
+}
+
+Future<List<dynamic>?> getParameters() async{
+  try{
+    final List<dynamic>? parameters = await MethodChannel('com.example.firstapp/Parameters').invokeMethod('getParameters');
+    return parameters;
+  } on PlatformException catch (e){
+    error = e.message;
+  }
+}
 
 class CameraScreen extends StatefulWidget{
   @override
@@ -24,7 +50,8 @@ class FloatingBox extends StatefulWidget {
 
   _FloatingBoxState createState() => _FloatingBoxState();
 }
-  class _FloatingBoxState extends State<FloatingBox>{
+
+class _FloatingBoxState extends State<FloatingBox>{
   bool showBox = true;
 
   Future<void> showAlert() async {
@@ -47,7 +74,7 @@ class FloatingBox extends StatefulWidget {
     super.initState();
 
     //Hide textbox after x duration
-    Future.delayed(Duration(seconds: 55), (){
+    Future.delayed(Duration(seconds: 4), (){
       if (mounted){
         setState(() {
           showBox = false;
@@ -62,7 +89,6 @@ class FloatingBox extends StatefulWidget {
     if (!showBox){
       return SizedBox.shrink();
     }
-
     return Positioned(
       left: widget.position.dx,
       top: widget.position.dy,
@@ -82,11 +108,28 @@ class FloatingBox extends StatefulWidget {
   }
 }
 
+void _getCalibration() async {
+  const platform = MethodChannel('com.example.firstapp/Parameters');
+  final _gyroscope = _gyroscopeData?.map((double v) => v.toStringAsFixed(1)).toList();
+  final List<num> _gps = [_currentPosition.altitude, _currentPosition.latitude, _currentPosition.longitude];
+  try {
+    platform.setMethodCallHandler((call) async {
+      if (call.method == 'getParameters') {
+        print("call method== getParameters");
+      }
+    });
+    if (_gyroscope != null){
+    await platform.invokeMethod('getParameters', {'cameraId': '0', '_gyroscope' : _gyroscope, '_xPixel': _tapCoordinates?.dx, '_yPixel': _tapCoordinates?.dy, 'gps':_gps});
+    }
+  } on PlatformException catch (e) {
+    print("Error: ${e.message}");
+  }
+}
+
 class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver{
   CameraController? controller;
   bool _isCameraInitialized = false;
-  Position _currentPosition = Position(longitude: 0.00, latitude: 0.00, timestamp: DateTime.now(), accuracy: 1.0, altitude: 0.0, heading: 0.0, speed: 0.0, speedAccuracy: 0.0);
-  final picker = ImagePicker();
+  final _streamSubscriptions = <StreamSubscription<dynamic>>[];
   List<FloatingBox> floatingBoxes = [];
 
   Future<void> showLoading() async {
@@ -94,7 +137,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
         barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
-          Future.delayed(Duration(seconds: 54), (){
+          Future.delayed(Duration(seconds: 2), (){
             Navigator.of(context).pop(true);
           });
           return SpinKitCircle(
@@ -113,7 +156,10 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   void _handleTapDown(TapDownDetails details){
     final RenderBox box = context.findRenderObject() as RenderBox;
     final Offset localPosition = box.globalToLocal(details.globalPosition);
-
+    //store tapped pixel coordinates
+    setState(() {
+      _tapCoordinates = localPosition;
+    });
     //User can only tap on specific area of the phone screen
     final Rect desiredArea = Rect.fromLTRB(2,128,397,709);
 
@@ -129,7 +175,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     }
   }
 
-  _getCurrentLocation() {
+  void _getCurrentLocation() {
     Geolocator
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best, forceAndroidLocationManager: true)
         .then((Position position) {
@@ -139,6 +185,29 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     }).catchError((e) {
       print(e);
     });
+  }
+
+  void _getGyroscope(){
+    _streamSubscriptions.add(
+      gyroscopeEvents.listen((event) {
+        setState(() {
+          _gyroscopeData = <double>[event.x,event.y,event.z];
+        });
+      }, onError: (e){
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: const Text("Gyroscope sensor not found!"),
+            content: const Text("Device does not support Gyroscope sensor"),
+            actions: [
+              ElevatedButton(onPressed: (){
+                Navigator.of(context).pop();
+              }, child: const Text("OK"))
+            ],
+          );
+        },
+        barrierDismissible: true,);
+      }, cancelOnError: true,),
+    );
   }
 
   void onNewCameraSelected (CameraDescription cameraDescription) async{
@@ -181,15 +250,8 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     }
   }
 
-  //stores compass events
-  CompassEvent? _lastRead;
-  DateTime? _lastReadAt;
-
   void _buildManualReader() async{
-    final CompassEvent tmp = await FlutterCompass.events!.first;
     setState(() {
-      _lastRead = tmp;
-      _lastReadAt = DateTime.now();
     });
   }
 
@@ -198,13 +260,18 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     onNewCameraSelected(cameras[0]);
     super.initState();
     _getCurrentLocation();
+    _getGyroscope();
     _buildManualReader();
+    readDatabase();
   }
 
   @override
   void dispose() {
     controller?.dispose();
     super.dispose();
+    for (final subscription in _streamSubscriptions){
+      subscription.cancel();
+    }
   }
 
   @override
@@ -217,7 +284,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     }
 
     if (state == AppLifecycleState.inactive){
-      //Free memory when camera isnt active
+      //Free memory when camera isn't active
       cameraController.dispose();
     } else if (state == AppLifecycleState.resumed){
       //Reinitialized camera
@@ -272,56 +339,58 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
           children: <Widget>[
             controller!.buildPreview(),
             Container(
-                alignment: Alignment.center,
+                alignment: Alignment.centerLeft,
                 width: double.infinity,
-                height: 105.0,
-                padding: EdgeInsets.all(10.0),
+                height: 75.0,
+                padding: EdgeInsets.only(left: 26, top: 30),
                 color: Colors.black87,
-                child:Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  InkWell(
+                child: Row (
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget> [
+                    InkWell(
                     onTap: (){
                       Navigator.of(context).pushReplacementNamed('firstapp/myHomePage');
                     },
                     child: Icon(const IconData(58199, fontFamily:'MaterialIcons', matchTextDirection: true),
                       color: Colors.white),
                   ),
-                ]
-              )
-            ),
+                    InkWell(
+                    highlightColor: Colors.lightBlueAccent,
+                    onTap: () {
+                      _getGyroscope();
+                      _getCalibration();
+                      _getCurrentLocation();
+                      showDialog(context: context, builder: (context){
+                        return AlertDialog(
+                            title: Text("Location Refreshed!"),
+                            content: Text("Location and device orientation updated."),
+                            actions: [ ElevatedButton(onPressed: (){
+                              Navigator.of(context).pop();},
+                              child: const Text("OK"))
+                        ],
+                        );
+                      },
+                      barrierDismissible: true,);
+                    },
+                    child: Icon(const IconData(0xf00e9, fontFamily: 'MaterialIcons'),
+                    color: Colors.white,),
+                  )],),
+            ), //back button
             Align(
-              alignment: const Alignment(-0.5, -0.70),
+              alignment: const Alignment(-0.5, -0.79),
               child: Container(
                 width: double.infinity,
                 height: 35.0,
                 padding: EdgeInsets.all(5.0),
                 color: Colors.black45,
-                child: Stack(
-                  children: <Widget>[
-                    Align(
-                      alignment: Alignment.center,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                          onTap: (){
-                            _getCurrentLocation();
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(4.0),
-                            child: Text("Altitude(m): ${_currentPosition.altitude.toStringAsFixed(4)}   Latitude: ${_currentPosition.latitude.toStringAsFixed(4)}   Longitude: ${_currentPosition.longitude.toStringAsFixed(4)}",
-                            style: TextStyle(color: Colors.white),),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                )
+                child: Container(
+                  padding: EdgeInsets.only(left:30,top:4),
+                  child: Text("Altitude(m): ${_currentPosition.altitude.toStringAsFixed(4)}   Latitude: ${_currentPosition.latitude.toStringAsFixed(4)}   Longitude: ${_currentPosition.longitude.toStringAsFixed(4)}",
+                    style: TextStyle(color: Colors.white),),
+                ),
               ),
-            ),
-            Positioned( top: 142, left: 3,
+            ), //Location info
+            Positioned( top: 110, left: 3,
                 child: Container(
                   width: 78,
                   height: 72,
@@ -329,7 +398,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                   decoration: BoxDecoration(color: Colors.black38,
                   borderRadius: BorderRadius.all(Radius.circular(20.0))),
                   child: _buildCompass(),
-                )),
+                )),//compass
 
             ...floatingBoxes,
           ],

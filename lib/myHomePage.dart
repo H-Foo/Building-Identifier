@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 
@@ -55,19 +54,8 @@ class MyHomePageState extends State<MyHomePage> {
                   blurRadius: 3)],
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
-                  fontSize: 30,
+                  fontSize: 25,
                 ),)),
-                // Positioned(top: 606, width: 113, height: 115,
-                //     child: Container(
-                //       decoration: BoxDecoration(
-                //         color: const Color(3345377237),
-                //         shape: BoxShape.circle,
-                //         image: DecorationImage(
-                //           image: AssetImage("assets/detect.png"),
-                //           fit: BoxFit.scaleDown,
-                //         ))
-                //       ),
-                //     ),
                 Positioned( width: 176, height: 49, top: 625,
                    child: ElevatedButton(
                       child: Text('START IDENTIFYING'),
@@ -95,7 +83,7 @@ class MyHomePageState extends State<MyHomePage> {
                           MaterialStateProperty.all(TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
                   ),
                 ),
-                Positioned( top: 420, width: 90, height: 83,
+                Positioned( top: 325,left: 264, width: 90, height: 83,
                     child: Image(
                   image: const AssetImage("assets/detect.png"), fit: BoxFit.cover
                 )),
