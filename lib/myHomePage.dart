@@ -88,7 +88,7 @@ class MyHomePageState extends State<MyHomePage> {
                     child: Icon(
                       const IconData(
                         0xe57f, fontFamily:'MaterialIcons', matchTextDirection: true,),
-                      color: Colors.black,),
+                      color: Colors.white,),
                     onTap: (){
                       Navigator.of(context).pushReplacementNamed('firstapp/settings');
                     },
@@ -99,7 +99,7 @@ class MyHomePageState extends State<MyHomePage> {
                     child: Icon(
                       const IconData(
                         0xe309, fontFamily:'MaterialIcons', matchTextDirection: true,),
-                      color: Colors.black,),
+                      color: Colors.white,),
                     onTap: (){
                       Navigator.of(context).pushReplacementNamed('firstapp/help');
                     },

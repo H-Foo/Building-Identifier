@@ -5,8 +5,6 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert' as convert;
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import '../main.dart';
@@ -32,11 +30,11 @@ void readDb(){
   );
 }
 
-Future<String> _fetchStaticMap(double lat, double long) async{
-  final apiKey = 'AIzaSyCaZOdkK0M9X20uCBWuTqE7xklRCw9E9YM'; // Replace with your actual Google Maps API key
+Future<NetworkImage> _fetchStaticMap(double lat, double long) async{
+  final apiKey = 'AIzaSyCaZOdkK0M9X20uCBWuTqE7xklRCw9E9YM';
   final width = 400;
   final height = 300;
-  final zoom = 15;
+  final zoom = 18;
 
   final url = 'https://maps.googleapis.com/maps/api/staticmap?'
       'center=$lat,$long'
@@ -46,12 +44,15 @@ Future<String> _fetchStaticMap(double lat, double long) async{
       '&markers=color:red%7Clabel:%7C$lat,$long'
       '&key=$apiKey';
 
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    return response.body;
-  } else {
-    throw Exception('Failed to fetch static map image');
-  }
+  final response = await NetworkImage(url);
+  print("resp: ${response}");
+  return response;
+  // if (response == 200) {
+  //   return response;
+  //
+  // } else {
+  //   throw Exception('Failed to fetch static map image');
+  // }
 }
 
 Future<List<dynamic>?> getParameters() async{
@@ -166,8 +167,9 @@ void _getCalibration() async {
     });
     print("pls");
     //if (_gyroscope != null){
-    _buildInfo = await platform.invokeMethod('getParameters', {'cameraId': '0', '_xPixel': _tapCoordinates?.dx, '_yPixel': _tapCoordinates?.dy, 'gps':_gps});
-    print("screw this ${_buildInfo}");
+    _buildInfo = await platform.invokeMethod('getParameters', {'cameraId': '0', '_gyroscope' : _gyroscope , '_xPixel': _tapCoordinates?.dx, '_yPixel': _tapCoordinates?.dy, 'gps':_gps});
+    print(_buildInfo.runtimeType);
+    print(_buildInfo);
     //}
   } on PlatformException catch (e) {
     print("Error: ${e.message}");
@@ -408,6 +410,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                     highlightColor: Colors.lightBlueAccent,
                     onTap: () {
                        _getGyroscope();
+                       print("getGyro: ${_gyroscopeData}" );
                       _getCurrentLocation();
                       _getCalibration();
                       showDialog(context: context, builder: (context){
@@ -439,22 +442,21 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                             );
                           },
                             barrierDismissible: true,);
-                        }
+                        } else{
                         _fetchStaticMap(_buildInfo["lat"],_buildInfo["long"]).then((
                             imageData) {
                           print("imagedata $imageData");
                           showDialog(context: context, builder: (context){
                             return AlertDialog(
                               title: Text("Building location on Map"),
-                              content: Image.memory(Uint8List.fromList(convert.base64Decode(imageData)),
-                                fit: BoxFit.fitWidth,),
+                              content: Image(image: imageData),
                               actions: [ElevatedButton(onPressed: (){
                                 Navigator.of(context).pop();
                               }, child: const Text("Close"),)],
                             );
                           }, barrierDismissible: true,);
                         }).catchError((e){print("Error in displaying map $e");});
-                      },
+                      }},
                       child: Icon(const IconData(0xe3c8, fontFamily:'MaterialIcons', matchTextDirection: true),
                           color: Colors.white),
                     ),

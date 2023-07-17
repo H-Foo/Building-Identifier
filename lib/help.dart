@@ -27,7 +27,7 @@ class _helpState extends State<help>{
               child: Text('How To Use',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.black,
+                  color: Colors.white70,
                 ),
                 textAlign: TextAlign.center,),
               width: 150, height: 20,),
@@ -86,8 +86,8 @@ class _helpState extends State<help>{
                   color: CupertinoColors.inactiveGray,
                 ),textAlign: TextAlign.left,),),
             Positioned(top: 417, left: 38,
-              child: Text("➜ Press *Start Identifying* button to open camera. Please select the refresh button first to refresh your location data. "
-                  "\n➜ Point the camera to your target building and tap on the screen. The app will identify and show you the name and location of the building. \n"
+              child: Text("➜ Press *Start Identifying* button to open camera."
+                  "\n➜ Point the camera to your target building and tap on the screen. The app will identify and show you the name and location of the building. Try selecting the refresh button to refresh your location if you don't get any matches. \n"
                   "➜ Continue the process until you are satisfied. You can press the map button to view the building location on a map.\n"
                   "\n  (❁´‿`❁)/ Happy identifying! \\(•ˇ‿ˇ•)",
                 style: TextStyle(
