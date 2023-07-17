@@ -62,13 +62,9 @@ class MyHomePageState extends State<MyHomePage> {
                       onPressed: () async {
                           PermissionStatus cameraStatus = await Permission.camera.request();
                           PermissionStatus locationStatus = await Permission.location.request();
-                          if (cameraStatus == PermissionStatus.denied){
+                          if (cameraStatus == PermissionStatus.denied || locationStatus.isDenied){
                             showAlert();
-                            print("camera permission denied");
-                          }
-                          if(locationStatus == PermissionStatus.denied){
-                            showAlert();
-                            print("location permission denied");
+                            print("permission location or camera denied");
                           }
                           if (cameraStatus == PermissionStatus.granted && locationStatus == PermissionStatus.granted){
                             Navigator.of(context).pushReplacementNamed('firstapp/camera_screen');
@@ -92,9 +88,20 @@ class MyHomePageState extends State<MyHomePage> {
                     child: Icon(
                       const IconData(
                         0xe57f, fontFamily:'MaterialIcons', matchTextDirection: true,),
-                      color: Colors.lightBlueAccent,),
+                      color: Colors.black,),
                     onTap: (){
                       Navigator.of(context).pushReplacementNamed('firstapp/settings');
+                    },
+                  ),
+                ),
+                Positioned(top: 61, left: 38, width: 27, height: 27,
+                  child: GestureDetector(
+                    child: Icon(
+                      const IconData(
+                        0xe309, fontFamily:'MaterialIcons', matchTextDirection: true,),
+                      color: Colors.black,),
+                    onTap: (){
+                      Navigator.of(context).pushReplacementNamed('firstapp/help');
                     },
                   ),
                 ),

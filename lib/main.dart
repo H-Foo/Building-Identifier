@@ -1,6 +1,7 @@
 import 'package:firstapp/myHomePage.dart';
 import 'package:firstapp/settings.dart';
 import 'package:firstapp/camera_screen.dart';
+import 'package:firstapp/help.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget{
         'firstapp/settings' : (context) => settings(),
         'firstapp/myHomePage' : (context) => MyHomePage(),
         'firstapp/camera_screen' : (context) => CameraScreen(),
+        'firstapp/help' : (context) => help(),
       },
     );
   }
