@@ -1,16 +1,6 @@
-# firstapp
+# Building Identifier
 
-A new Flutter project.
+The Building Identifier Application project was proposed with the objective of evaluating the capabilities of Flutter. The mobile application uses a mathematical approach instead of advanced deep learning approach which is commonly implemented by other similar concept applications. The project involves in identifying the buildings by retrieving latitude, longitude, and orientation data. The information is then translated to estimate the target building’s location in the real world which is then compared to a data set extracted from Google Maps and Wikipedia to find the best match building’s information. The purpose of this application is to provide a simple tool that helps users identify and learn about the buildings around them as well as to experiment with Flutter’s capabilities.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Demo Video of the Application
+(https://drive.google.com/file/d/1RftMHdGcpyU9HUO666Ug3LqVerLh6_tQ/view?usp=sharing)
